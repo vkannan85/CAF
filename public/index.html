@@ -1,0 +1,313 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Azure CAF Assessment</title>
+<style>
+  :root {
+    --green: #107c10;
+    --amber: #9a6700;
+    --red: #d13438;
+    --gray: #605e5c;
+  }
+  * { box-sizing: border-box; }
+  body {
+    font-family: Segoe UI, Arial, sans-serif;
+    margin: 0;
+    background: #f5f5f5;
+    color: #1a1a1a;
+  }
+  header {
+    background: #1a1a2e;
+    color: #fff;
+    padding: 16px 24px;
+  }
+  header h1 { margin: 0; font-size: 20px; }
+  .container { max-width: 1100px; margin: 0 auto; padding: 20px; }
+  .card {
+    background: #fff;
+    border-radius: 8px;
+    padding: 16px 20px;
+    margin-bottom: 16px;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+  }
+  .controls { display: flex; gap: 12px; align-items: center; flex-wrap: wrap; }
+  select, button {
+    font-size: 14px;
+    padding: 8px 14px;
+    border-radius: 6px;
+    border: 1px solid #ccc;
+  }
+  button {
+    background: #0078d4;
+    color: #fff;
+    border: none;
+    cursor: pointer;
+  }
+  button:hover { background: #005a9e; }
+  button.secondary { background: #605e5c; }
+  button.secondary:hover { background: #484644; }
+  button:disabled { background: #ccc; cursor: not-allowed; }
+  .score-banner {
+    display: inline-block;
+    padding: 14px 22px;
+    border-radius: 6px;
+    color: #fff;
+    font-size: 26px;
+    font-weight: 700;
+  }
+  table { border-collapse: collapse; width: 100%; margin-top: 12px; }
+  th, td { border: 1px solid #ddd; padding: 8px; text-align: left; font-size: 13px; vertical-align: top; }
+  th { background: #f3f2f1; }
+  tr:nth-child(even) { background: #fafafa; }
+  .status-Implemented { color: var(--green); font-weight: 600; }
+  .status-Partial { color: var(--amber); font-weight: 600; }
+  .status-Not-Implemented { color: var(--red); font-weight: 600; }
+  .status-Manual---Process { color: var(--gray); font-weight: 600; }
+  .status-Error { color: var(--red); font-weight: 600; }
+  .hint { color: #605e5c; font-size: 13px; }
+  .error-box { background: #fde7e9; color: var(--red); padding: 10px 14px; border-radius: 6px; margin-top: 8px; }
+  #tagPanel { display: none; }
+  #tagPanel .resource-list { max-height: 220px; overflow-y: auto; border: 1px solid #ddd; padding: 8px; margin: 8px 0; border-radius: 6px; }
+  #tagPanel label { display: block; font-size: 13px; margin-bottom: 4px; }
+  .tag-inputs { display: flex; gap: 10px; flex-wrap: wrap; margin: 8px 0; }
+  .tag-inputs div { display: flex; flex-direction: column; gap: 4px; }
+  .tag-inputs input { padding: 6px 10px; border: 1px solid #ccc; border-radius: 6px; }
+  .result-msg { margin-top: 10px; font-size: 13px; }
+</style>
+</head>
+<body>
+<header>
+  <h1>Azure CAF Subscription Assessment</h1>
+</header>
+<div class="container">
+
+  <div class="card">
+    <div class="controls">
+      <select id="subSelect"><option value="">Loading subscriptions...</option></select>
+      <button id="scanBtn">Run Assessment</button>
+      <span class="hint" id="status"></span>
+    </div>
+  </div>
+
+  <div class="card" id="scoreCard" style="display:none">
+    <div id="scoreBanner" class="score-banner"></div>
+    <p id="scoreDetail" class="hint"></p>
+    <table id="categoryTable">
+      <thead><tr><th>Category</th><th>Score</th><th>Percent</th></tr></thead>
+      <tbody></tbody>
+    </table>
+  </div>
+
+  <div class="card" id="resultsCard" style="display:none">
+    <h2>Detailed Results</h2>
+    <table id="resultsTable">
+      <thead><tr><th>Category</th><th>Check</th><th>Status</th><th>Details</th><th>Recommendation</th><th>Action</th></tr></thead>
+      <tbody></tbody>
+    </table>
+  </div>
+
+  <div class="card" id="tagPanel">
+    <h2>Apply Tags</h2>
+    <p class="hint">Select the resources below and enter tag values. Existing tags are preserved (Merge) - only the keys you fill in are added/updated.</p>
+    <div class="resource-list" id="resourceList"></div>
+    <div class="tag-inputs">
+      <div><label>Environment</label><input id="tagEnvironment" placeholder="e.g. Production"></div>
+      <div><label>Owner</label><input id="tagOwner" placeholder="e.g. team@company.com"></div>
+      <div><label>CostCenter</label><input id="tagCostCenter" placeholder="e.g. FIN001"></div>
+    </div>
+    <button id="applyTagsBtn">Apply Tags to Selected</button>
+    <button class="secondary" id="closeTagPanel">Cancel</button>
+    <div id="tagResult" class="result-msg"></div>
+  </div>
+
+</div>
+
+<script>
+const subSelect = document.getElementById('subSelect');
+const scanBtn = document.getElementById('scanBtn');
+const statusEl = document.getElementById('status');
+const scoreCard = document.getElementById('scoreCard');
+const scoreBanner = document.getElementById('scoreBanner');
+const scoreDetail = document.getElementById('scoreDetail');
+const categoryTable = document.querySelector('#categoryTable tbody');
+const resultsCard = document.getElementById('resultsCard');
+const resultsTable = document.querySelector('#resultsTable tbody');
+const tagPanel = document.getElementById('tagPanel');
+const resourceList = document.getElementById('resourceList');
+const tagResult = document.getElementById('tagResult');
+
+function statusClass(status) {
+  return 'status-' + status.replace(/\s+\/\s+|\s+/g, '-');
+}
+
+function scoreColor(pct) {
+  if (pct >= 75) return '#107c10';
+  if (pct >= 50) return '#9a6700';
+  return '#d13438';
+}
+
+async function loadSubscriptions() {
+  try {
+    const res = await fetch('/api/subscriptions');
+    const data = await res.json();
+    if (data.error) throw new Error(data.error);
+    subSelect.innerHTML = '';
+    if (!data.subscriptions || data.subscriptions.length === 0) {
+      subSelect.innerHTML = '<option value="">No subscriptions found</option>';
+      return;
+    }
+    for (const sub of data.subscriptions) {
+      const opt = document.createElement('option');
+      opt.value = sub.id;
+      opt.textContent = `${sub.name} (${sub.id})`;
+      subSelect.appendChild(opt);
+    }
+  } catch (e) {
+    subSelect.innerHTML = '<option value="">Error loading subscriptions</option>';
+    statusEl.innerHTML = `<div class="error-box">${e.message}</div>`;
+  }
+}
+
+let lastResults = [];
+
+async function runAssessment() {
+  const subscriptionId = subSelect.value;
+  if (!subscriptionId) return;
+  scanBtn.disabled = true;
+  statusEl.textContent = 'Scanning subscription... this can take 10-30 seconds.';
+  scoreCard.style.display = 'none';
+  resultsCard.style.display = 'none';
+  tagPanel.style.display = 'none';
+
+  try {
+    const res = await fetch('/api/assess', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ subscriptionId }),
+    });
+    const data = await res.json();
+    if (data.error) throw new Error(data.error);
+
+    lastResults = data.results;
+    renderScore(data.scoring);
+    renderResults(data.results);
+    statusEl.textContent = '';
+  } catch (e) {
+    statusEl.innerHTML = `<div class="error-box">${e.message}</div>`;
+  } finally {
+    scanBtn.disabled = false;
+  }
+}
+
+function renderScore(scoring) {
+  const color = scoreColor(scoring.overallPct);
+  scoreBanner.style.background = color;
+  scoreBanner.textContent = `CAF Alignment Score: ${scoring.overallPct}% - ${scoring.maturity}`;
+  scoreDetail.textContent = `${scoring.earned} of ${scoring.max} scorable checks passed (${scoring.excluded} excluded - Manual/Process or Error)`;
+
+  categoryTable.innerHTML = '';
+  for (const c of scoring.categoryScores) {
+    const tr = document.createElement('tr');
+    tr.innerHTML = `<td>${c.category}</td><td>${c.earned} / ${c.max}</td><td>${c.percent}%</td>`;
+    categoryTable.appendChild(tr);
+  }
+  scoreCard.style.display = '';
+}
+
+function renderResults(results) {
+  resultsTable.innerHTML = '';
+  for (const r of results) {
+    const tr = document.createElement('tr');
+    const actionCell = document.createElement('td');
+    if (r.check === 'Required tags on resources' && r.extra && r.extra.nonCompliant && r.extra.nonCompliant.length > 0) {
+      const btn = document.createElement('button');
+      btn.textContent = 'Apply tags';
+      btn.onclick = () => openTagPanel(r.extra.nonCompliant);
+      actionCell.appendChild(btn);
+    }
+    tr.innerHTML = `
+      <td>${r.category}</td>
+      <td>${r.check}</td>
+      <td class="${statusClass(r.status)}">${r.status}</td>
+      <td>${escapeHtml(r.details)}</td>
+      <td>${escapeHtml(r.recommendation || '')}</td>
+    `;
+    tr.appendChild(actionCell);
+    resultsTable.appendChild(tr);
+  }
+  resultsCard.style.display = '';
+}
+
+function escapeHtml(str) {
+  const div = document.createElement('div');
+  div.textContent = str || '';
+  return div.innerHTML;
+}
+
+function openTagPanel(nonCompliant) {
+  resourceList.innerHTML = '';
+  for (const res of nonCompliant) {
+    const label = document.createElement('label');
+    const cb = document.createElement('input');
+    cb.type = 'checkbox';
+    cb.value = res.id;
+    cb.checked = true;
+    label.appendChild(cb);
+    label.append(` ${res.name} (${res.type})`);
+    resourceList.appendChild(label);
+  }
+  tagResult.textContent = '';
+  tagPanel.style.display = '';
+  tagPanel.scrollIntoView({ behavior: 'smooth' });
+}
+
+document.getElementById('closeTagPanel').onclick = () => { tagPanel.style.display = 'none'; };
+
+document.getElementById('applyTagsBtn').onclick = async () => {
+  const selected = Array.from(resourceList.querySelectorAll('input[type=checkbox]:checked')).map(cb => cb.value);
+  if (selected.length === 0) {
+    tagResult.textContent = 'Select at least one resource.';
+    return;
+  }
+  const tags = {};
+  const env = document.getElementById('tagEnvironment').value.trim();
+  const owner = document.getElementById('tagOwner').value.trim();
+  const cc = document.getElementById('tagCostCenter').value.trim();
+  if (env) tags.Environment = env;
+  if (owner) tags.Owner = owner;
+  if (cc) tags.CostCenter = cc;
+  if (Object.keys(tags).length === 0) {
+    tagResult.textContent = 'Enter at least one tag value.';
+    return;
+  }
+
+  tagResult.textContent = `Applying tags to ${selected.length} resource(s)...`;
+  try {
+    const res = await fetch('/api/tags/apply', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ resourceIds: selected, tags }),
+    });
+    const data = await res.json();
+    if (data.error) throw new Error(data.error);
+    const successCount = data.outcomes.filter(o => o.status === 'success').length;
+    const errors = data.outcomes.filter(o => o.status === 'error');
+    let msg = `Applied tags to ${successCount} of ${selected.length} resource(s).`;
+    if (errors.length > 0) {
+      msg += ' Errors: ' + errors.map(e => `${e.id}: ${e.message}`).join('; ');
+    } else {
+      msg += ' Re-run the assessment to see the updated score.';
+    }
+    tagResult.textContent = msg;
+  } catch (e) {
+    tagResult.textContent = `Error: ${e.message}`;
+  }
+};
+
+scanBtn.onclick = runAssessment;
+loadSubscriptions();
+</script>
+</body>
+</html>
