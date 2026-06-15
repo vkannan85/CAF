@@ -3,151 +3,473 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Azure CAF Assessment</title>
+<title>Azure CAF Subscription Assessment</title>
 <style>
   :root {
+    --ms-blue: #0078d4;
+    --ms-blue-dark: #005a9e;
+    --ms-blue-darker: #004578;
     --green: #107c10;
-    --amber: #9a6700;
+    --green-bg: #dff6dd;
+    --amber: #9d5d00;
+    --amber-bg: #fff4ce;
     --red: #d13438;
+    --red-bg: #fde7e9;
     --gray: #605e5c;
+    --gray-bg: #f3f2f1;
+    --border: #edebe9;
+    --bg: #faf9f8;
+    --text: #201f1e;
+    --text-secondary: #605e5c;
+    --radius: 8px;
+    --shadow: 0 1.6px 3.6px rgba(0,0,0,0.11), 0 0.3px 0.9px rgba(0,0,0,0.08);
   }
   * { box-sizing: border-box; }
+  html, body { margin: 0; padding: 0; }
   body {
-    font-family: Segoe UI, Arial, sans-serif;
-    margin: 0;
-    background: #f5f5f5;
-    color: #1a1a1a;
+    font-family: "Segoe UI", "Segoe UI Web (West European)", -apple-system, BlinkMacSystemFont, Roboto, Helvetica, Arial, sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    -webkit-font-smoothing: antialiased;
   }
-  header {
-    background: #1a1a2e;
+
+  /* ── Header ────────────────────────────── */
+  header.app-header {
+    background: linear-gradient(135deg, #0a2a4a 0%, #0078d4 100%);
     color: #fff;
-    padding: 16px 24px;
+    padding: 18px 32px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    gap: 12px;
   }
-  header h1 { margin: 0; font-size: 20px; }
-  .container { max-width: 1100px; margin: 0 auto; padding: 20px; }
+  .brand { display: flex; align-items: center; gap: 14px; }
+  .brand-icon {
+    width: 44px; height: 44px; border-radius: 8px;
+    background: rgba(255,255,255,0.15);
+    display: flex; align-items: center; justify-content: center;
+    font-size: 22px;
+    border: 1px solid rgba(255,255,255,0.25);
+  }
+  .brand h1 { margin: 0; font-size: 20px; font-weight: 600; letter-spacing: 0.2px; }
+  .brand p.subtitle { margin: 2px 0 0; font-size: 13px; color: rgba(255,255,255,0.78); }
+  .header-meta { font-size: 12px; color: rgba(255,255,255,0.78); text-align: right; }
+  .header-meta a { color: #cfe8ff; text-decoration: none; }
+  .header-meta a:hover { text-decoration: underline; }
+
+  /* ── Layout ────────────────────────────── */
+  .page {
+    width: 100%;
+    max-width: 1800px;
+    margin: 0 auto;
+    padding: 20px 32px 48px;
+  }
   .card {
     background: #fff;
-    border-radius: 8px;
-    padding: 16px 20px;
-    margin-bottom: 16px;
-    box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 20px 24px;
+    margin-bottom: 18px;
+    box-shadow: var(--shadow);
   }
-  .controls { display: flex; gap: 12px; align-items: center; flex-wrap: wrap; }
-  select, button {
+  .card h2 {
+    margin: 0 0 12px;
+    font-size: 16px;
+    font-weight: 600;
+    color: var(--text);
+  }
+
+  /* ── Toolbar ───────────────────────────── */
+  .toolbar { display: flex; align-items: flex-end; gap: 16px; flex-wrap: wrap; }
+  .control-group { display: flex; flex-direction: column; gap: 6px; }
+  .control-group label { font-size: 12px; font-weight: 600; color: var(--text-secondary); text-transform: uppercase; letter-spacing: 0.4px; }
+  .control-group select { min-width: 360px; }
+
+  select, button, input {
+    font-family: inherit;
     font-size: 14px;
     padding: 8px 14px;
-    border-radius: 6px;
-    border: 1px solid #ccc;
+    border-radius: 4px;
+    border: 1px solid #8a8886;
+    background: #fff;
+    color: var(--text);
   }
+  select:focus, input:focus { outline: 2px solid var(--ms-blue); outline-offset: -1px; border-color: var(--ms-blue); }
   button {
-    background: #0078d4;
+    background: var(--ms-blue);
     color: #fff;
-    border: none;
+    border: 1px solid var(--ms-blue);
     cursor: pointer;
+    font-weight: 600;
+    transition: background 0.1s ease;
   }
-  button:hover { background: #005a9e; }
-  button.secondary { background: #605e5c; }
-  button.secondary:hover { background: #484644; }
-  button:disabled { background: #ccc; cursor: not-allowed; }
-  .score-banner {
-    display: inline-block;
-    padding: 14px 22px;
-    border-radius: 6px;
-    color: #fff;
-    font-size: 26px;
-    font-weight: 700;
+  button:hover { background: var(--ms-blue-dark); }
+  button:active { background: var(--ms-blue-darker); }
+  button.secondary { background: #fff; color: var(--text); border: 1px solid #8a8886; }
+  button.secondary:hover { background: var(--gray-bg); }
+  button.small { padding: 4px 12px; font-size: 12px; border-radius: 4px; }
+  button:disabled { background: #f3f2f1; color: #a19f9d; border-color: #f3f2f1; cursor: not-allowed; }
+
+  .sub-info {
+    display: flex; gap: 24px; flex-wrap: wrap; align-items: center;
+    padding: 10px 14px; background: var(--gray-bg); border-radius: 6px; font-size: 13px;
+    margin-top: 4px; width: 100%;
   }
-  table { border-collapse: collapse; width: 100%; margin-top: 12px; }
-  th, td { border: 1px solid #ddd; padding: 8px; text-align: left; font-size: 13px; vertical-align: top; }
-  th { background: #f3f2f1; }
-  tr:nth-child(even) { background: #fafafa; }
-  .status-Implemented { color: var(--green); font-weight: 600; }
-  .status-Partial { color: var(--amber); font-weight: 600; }
-  .status-Not-Implemented { color: var(--red); font-weight: 600; }
-  .status-Manual---Process { color: var(--gray); font-weight: 600; }
-  .status-Error { color: var(--red); font-weight: 600; }
-  .hint { color: #605e5c; font-size: 13px; }
-  .error-box { background: #fde7e9; color: var(--red); padding: 10px 14px; border-radius: 6px; margin-top: 8px; }
-  #tagPanel { display: none; }
-  #tagPanel .resource-list { max-height: 220px; overflow-y: auto; border: 1px solid #ddd; padding: 8px; margin: 8px 0; border-radius: 6px; }
-  #tagPanel label { display: block; font-size: 13px; margin-bottom: 4px; }
-  .tag-inputs { display: flex; gap: 10px; flex-wrap: wrap; margin: 8px 0; }
-  .tag-inputs div { display: flex; flex-direction: column; gap: 4px; }
-  .tag-inputs input { padding: 6px 10px; border: 1px solid #ccc; border-radius: 6px; }
-  .result-msg { margin-top: 10px; font-size: 13px; }
+  .sub-info b { color: var(--text); }
+  .sub-info .pill { padding: 2px 10px; border-radius: 10px; font-size: 12px; font-weight: 600; }
+  .pill-enabled { background: var(--green-bg); color: var(--green); }
+  .pill-disabled { background: var(--red-bg); color: var(--red); }
+
+  .hint { color: var(--text-secondary); font-size: 13px; }
+  .warn { color: var(--amber); font-size: 13px; }
+  .error-box { background: var(--red-bg); color: var(--red); padding: 10px 14px; border-radius: 6px; margin-top: 10px; font-size: 13px; }
+
+  /* ── Score section ─────────────────────── */
+  .score-layout { display: flex; gap: 36px; flex-wrap: wrap; align-items: center; }
+  .score-ring-wrap { position: relative; width: 168px; height: 168px; flex-shrink: 0; }
+  .score-ring-wrap svg { transform: rotate(0deg); }
+  .score-ring-bg { fill: none; stroke: var(--border); stroke-width: 14; }
+  .score-ring-fill { fill: none; stroke-width: 14; stroke-linecap: round; transform-origin: 50% 50%; transform: rotate(-90deg); transition: stroke-dashoffset 0.6s ease; }
+  .score-ring-label {
+    position: absolute; inset: 0; display: flex; flex-direction: column;
+    align-items: center; justify-content: center; text-align: center;
+  }
+  .score-ring-label .pct { font-size: 32px; font-weight: 700; line-height: 1; }
+  .score-ring-label .maturity-badge { margin-top: 6px; padding: 3px 12px; border-radius: 12px; font-size: 12px; font-weight: 600; }
+
+  .score-summary { flex: 1; min-width: 280px; }
+  .stat-cards { display: flex; gap: 12px; flex-wrap: wrap; margin-bottom: 18px; }
+  .stat-card {
+    flex: 1; min-width: 110px;
+    border: 1px solid var(--border); border-radius: 6px; padding: 10px 14px;
+    border-left: 4px solid var(--gray);
+  }
+  .stat-card .num { font-size: 22px; font-weight: 700; line-height: 1.2; }
+  .stat-card .label { font-size: 12px; color: var(--text-secondary); }
+  .stat-card.st-Implemented { border-left-color: var(--green); }
+  .stat-card.st-Partial { border-left-color: var(--amber); }
+  .stat-card.st-NotImplemented { border-left-color: var(--red); }
+  .stat-card.st-Error { border-left-color: var(--red); }
+  .stat-card.st-Manual { border-left-color: var(--gray); }
+
+  .category-bars { display: flex; flex-direction: column; gap: 10px; }
+  .category-bar-row { display: grid; grid-template-columns: 220px 1fr 90px; align-items: center; gap: 12px; font-size: 13px; }
+  .category-bar-track { background: var(--border); border-radius: 6px; height: 10px; overflow: hidden; }
+  .category-bar-fill { height: 100%; border-radius: 6px; transition: width 0.6s ease; }
+  .category-bar-pct { text-align: right; font-weight: 600; font-size: 13px; }
+
+  /* ── Results table ─────────────────────── */
+  .results-header { display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 12px; margin-bottom: 12px; }
+  .results-header h2 { margin: 0; }
+  .filters { display: flex; gap: 10px; flex-wrap: wrap; align-items: center; }
+  .filters select { min-width: 180px; }
+  .results-count { font-size: 13px; color: var(--text-secondary); }
+
+  table { border-collapse: collapse; width: 100%; }
+  th, td { border-bottom: 1px solid var(--border); padding: 10px 12px; text-align: left; font-size: 13px; vertical-align: top; }
+  th { background: var(--gray-bg); font-weight: 600; color: var(--text); position: sticky; top: 0; }
+  tr:hover td { background: #f3f9fd; }
+
+  .status-badge {
+    display: inline-flex; align-items: center; gap: 6px;
+    padding: 3px 10px; border-radius: 12px; font-size: 12px; font-weight: 600; white-space: nowrap;
+  }
+  .badge-Implemented { background: var(--green-bg); color: var(--green); }
+  .badge-Partial { background: var(--amber-bg); color: var(--amber); }
+  .badge-Not-Implemented { background: var(--red-bg); color: var(--red); }
+  .badge-Manual---Process { background: var(--gray-bg); color: var(--gray); }
+  .badge-Error { background: var(--red-bg); color: var(--red); }
+
+  .category-tag {
+    display: inline-block; padding: 2px 8px; border-radius: 4px; font-size: 11px; font-weight: 600;
+    background: #e8f1fb; color: var(--ms-blue-dark);
+  }
+
+  /* ── Action panel ──────────────────────── */
+  #actionPanel { border-left: 4px solid var(--ms-blue); }
+  .rg-group { border: 1px solid var(--border); border-radius: var(--radius); padding: 14px; margin-bottom: 12px; background: #fcfcfb; }
+  .rg-group .rg-header { font-weight: 600; margin-bottom: 8px; }
+  .resource-list { max-height: 180px; overflow-y: auto; border: 1px solid var(--border); padding: 8px; margin: 8px 0; border-radius: 6px; background: #fff; }
+  .resource-list label, .plain-list label { display: block; font-size: 13px; margin-bottom: 4px; }
+  .tag-inputs-list { margin: 8px 0; }
+  .tag-row { display: flex; gap: 8px; margin-bottom: 6px; }
+  .tag-row input { flex: 1; }
+  .tag-row .tag-key { flex: 0 0 180px; }
+  .add-tag-row { margin-bottom: 10px; }
+  .result-msg { margin-top: 12px; font-size: 13px; white-space: pre-wrap; }
+  .form-row { display: flex; gap: 14px; flex-wrap: wrap; margin: 8px 0 16px; }
+  .form-row div { display: flex; flex-direction: column; gap: 6px; }
+  .form-row label { font-size: 12px; font-weight: 600; color: var(--text-secondary); }
+  .form-row input { min-width: 200px; }
+  .action-footer { display: flex; gap: 10px; margin-top: 4px; }
+
+  footer.app-footer {
+    text-align: center; padding: 18px; font-size: 12px; color: var(--text-secondary);
+  }
 </style>
 </head>
 <body>
-<header>
-  <h1>Azure CAF Subscription Assessment</h1>
-</header>
-<div class="container">
-
-  <div class="card">
-    <div class="controls">
-      <select id="subSelect"><option value="">Loading subscriptions...</option></select>
-      <button id="scanBtn">Run Assessment</button>
-      <span class="hint" id="status"></span>
+<header class="app-header">
+  <div class="brand">
+    <div class="brand-icon">&#9729;</div>
+    <div>
+      <h1>Azure CAF Subscription Assessment</h1>
+      <p class="subtitle">Cloud Adoption Framework governance scoring &amp; guided remediation</p>
     </div>
+  </div>
+  <div class="header-meta">
+    <div id="headerTimestamp">No assessment run yet</div>
+  </div>
+</header>
+
+<div class="page">
+
+  <div class="card toolbar">
+    <div class="control-group">
+      <label for="subSelect">Subscription</label>
+      <select id="subSelect"><option value="">Loading subscriptions...</option></select>
+    </div>
+    <button id="scanBtn">Run Assessment</button>
+    <button class="secondary" id="namingSettingsBtn">Naming convention settings</button>
+    <span class="hint" id="status"></span>
+    <div id="subInfo" class="sub-info" style="display:none"></div>
+  </div>
+
+  <div class="card" id="namingSettingsCard" style="display:none">
+    <h2>Naming Convention Settings</h2>
+    <p class="hint">Customize the prefixes/abbreviations used by the "Naming convention compliance" check to match your customer's naming standard. Saved in this browser only.</p>
+    <div class="form-row">
+      <div><label>Resource group prefix</label><input id="rgPrefixInput" placeholder="e.g. rg-"></div>
+    </div>
+    <div class="tag-inputs-list" id="namingTypeRows"></div>
+    <div class="add-tag-row"><button class="secondary small" id="addNamingTypeBtn">+ Add resource type</button></div>
+    <div class="action-footer">
+      <button id="saveNamingBtn">Save</button>
+      <button class="secondary" id="resetNamingBtn">Reset to CAF defaults</button>
+    </div>
+    <div id="namingSettingsResult" class="result-msg"></div>
   </div>
 
   <div class="card" id="scoreCard" style="display:none">
-    <div id="scoreBanner" class="score-banner"></div>
-    <p id="scoreDetail" class="hint"></p>
-    <table id="categoryTable">
-      <thead><tr><th>Category</th><th>Score</th><th>Percent</th></tr></thead>
-      <tbody></tbody>
-    </table>
+    <h2>CAF Alignment Score</h2>
+    <div class="score-layout">
+      <div class="score-ring-wrap">
+        <svg width="168" height="168" viewBox="0 0 168 168">
+          <circle class="score-ring-bg" cx="84" cy="84" r="70"></circle>
+          <circle class="score-ring-fill" id="scoreRingFill" cx="84" cy="84" r="70"></circle>
+        </svg>
+        <div class="score-ring-label">
+          <span class="pct" id="scorePctText">0%</span>
+          <span class="maturity-badge" id="maturityBadge"></span>
+        </div>
+      </div>
+      <div class="score-summary">
+        <div class="stat-cards" id="statCards"></div>
+        <div class="category-bars" id="categoryBars"></div>
+      </div>
+    </div>
+    <p id="scoreDetail" class="hint" style="margin-top:16px"></p>
   </div>
 
   <div class="card" id="resultsCard" style="display:none">
-    <h2>Detailed Results</h2>
+    <div class="results-header">
+      <h2>Detailed Results</h2>
+      <div class="filters">
+        <select id="categoryFilter"><option value="">All categories</option></select>
+        <select id="statusFilter">
+          <option value="">All statuses</option>
+          <option value="Implemented">Implemented</option>
+          <option value="Partial">Partial</option>
+          <option value="Not Implemented">Not Implemented</option>
+          <option value="Manual / Process">Manual / Process</option>
+          <option value="Error">Error</option>
+        </select>
+        <span class="results-count" id="resultsCount"></span>
+      </div>
+    </div>
     <table id="resultsTable">
       <thead><tr><th>Category</th><th>Check</th><th>Status</th><th>Details</th><th>Recommendation</th><th>Action</th></tr></thead>
       <tbody></tbody>
     </table>
   </div>
 
-  <div class="card" id="tagPanel">
-    <h2>Apply Tags</h2>
-    <p class="hint">Select the resources below and enter tag values. Existing tags are preserved (Merge) - only the keys you fill in are added/updated.</p>
-    <div class="resource-list" id="resourceList"></div>
-    <div class="tag-inputs">
-      <div><label>Environment</label><input id="tagEnvironment" placeholder="e.g. Production"></div>
-      <div><label>Owner</label><input id="tagOwner" placeholder="e.g. team@company.com"></div>
-      <div><label>CostCenter</label><input id="tagCostCenter" placeholder="e.g. FIN001"></div>
+  <div class="card" id="actionPanel" style="display:none">
+    <h2 id="actionTitle">Action</h2>
+    <div id="actionBody"></div>
+    <div class="action-footer">
+      <button id="actionApplyBtn">Apply</button>
+      <button class="secondary" id="closeAction">Cancel</button>
     </div>
-    <button id="applyTagsBtn">Apply Tags to Selected</button>
-    <button class="secondary" id="closeTagPanel">Cancel</button>
-    <div id="tagResult" class="result-msg"></div>
+    <div id="actionResult" class="result-msg"></div>
   </div>
 
 </div>
+
+<footer class="app-footer">
+  Azure CAF Subscription Assessment &mdash; read-only checks plus opt-in remediation actions. No changes are made to your subscription unless you explicitly apply an action.
+</footer>
 
 <script>
 const subSelect = document.getElementById('subSelect');
 const scanBtn = document.getElementById('scanBtn');
 const statusEl = document.getElementById('status');
+const subInfo = document.getElementById('subInfo');
+const headerTimestamp = document.getElementById('headerTimestamp');
+
 const scoreCard = document.getElementById('scoreCard');
-const scoreBanner = document.getElementById('scoreBanner');
+const scoreRingFill = document.getElementById('scoreRingFill');
+const scorePctText = document.getElementById('scorePctText');
+const maturityBadge = document.getElementById('maturityBadge');
 const scoreDetail = document.getElementById('scoreDetail');
-const categoryTable = document.querySelector('#categoryTable tbody');
+const statCards = document.getElementById('statCards');
+const categoryBars = document.getElementById('categoryBars');
+
 const resultsCard = document.getElementById('resultsCard');
 const resultsTable = document.querySelector('#resultsTable tbody');
-const tagPanel = document.getElementById('tagPanel');
-const resourceList = document.getElementById('resourceList');
-const tagResult = document.getElementById('tagResult');
+const categoryFilter = document.getElementById('categoryFilter');
+const statusFilter = document.getElementById('statusFilter');
+const resultsCount = document.getElementById('resultsCount');
+
+const actionPanel = document.getElementById('actionPanel');
+const actionTitle = document.getElementById('actionTitle');
+const actionBody = document.getElementById('actionBody');
+const actionApplyBtn = document.getElementById('actionApplyBtn');
+const actionResult = document.getElementById('actionResult');
+
+let currentResults = [];
+let currentSubscriptionId = '';
+
+// ───────────────────────────────────────────
+// Naming convention settings
+// ───────────────────────────────────────────
+const NAMING_CONFIG_KEY = 'caf-naming-config';
+const DEFAULT_NAMING_CONFIG = {
+  rgPrefix: 'rg-',
+  types: {
+    'microsoft.storage/storageaccounts': 'st',
+    'microsoft.keyvault/vaults': 'kv',
+    'microsoft.network/virtualnetworks': 'vnet',
+    'microsoft.network/networksecuritygroups': 'nsg',
+    'microsoft.compute/virtualmachines': 'vm',
+    'microsoft.network/publicipaddresses': 'pip',
+    'microsoft.web/sites': 'app',
+    'microsoft.sql/servers': 'sql',
+  },
+};
+
+const namingSettingsCard = document.getElementById('namingSettingsCard');
+const namingSettingsBtn = document.getElementById('namingSettingsBtn');
+const namingTypeRows = document.getElementById('namingTypeRows');
+const rgPrefixInput = document.getElementById('rgPrefixInput');
+const namingSettingsResult = document.getElementById('namingSettingsResult');
+
+function loadNamingConfig() {
+  try {
+    const raw = localStorage.getItem(NAMING_CONFIG_KEY);
+    if (!raw) return JSON.parse(JSON.stringify(DEFAULT_NAMING_CONFIG));
+    const parsed = JSON.parse(raw);
+    if (!parsed.rgPrefix || !parsed.types) return JSON.parse(JSON.stringify(DEFAULT_NAMING_CONFIG));
+    return parsed;
+  } catch (e) {
+    return JSON.parse(JSON.stringify(DEFAULT_NAMING_CONFIG));
+  }
+}
+
+function renderNamingTypeRows(config) {
+  namingTypeRows.innerHTML = '';
+  for (const [type, abbrev] of Object.entries(config.types)) {
+    addNamingTypeRow(type, abbrev);
+  }
+}
+
+function addNamingTypeRow(type = '', abbrev = '') {
+  const row = document.createElement('div');
+  row.className = 'tag-row';
+  row.innerHTML = `
+    <input class="naming-type" placeholder="e.g. microsoft.storage/storageaccounts" value="${escapeHtml(type)}">
+    <input class="naming-abbrev tag-key" placeholder="prefix e.g. st" value="${escapeHtml(abbrev)}">
+    <button class="secondary small naming-remove-row">Remove</button>
+  `;
+  row.querySelector('.naming-remove-row').onclick = () => row.remove();
+  namingTypeRows.appendChild(row);
+}
+
+function getNamingConfigFromForm() {
+  const rgPrefix = rgPrefixInput.value.trim() || 'rg-';
+  const types = {};
+  for (const row of namingTypeRows.querySelectorAll('.tag-row')) {
+    const type = row.querySelector('.naming-type').value.trim();
+    const abbrev = row.querySelector('.naming-abbrev').value.trim();
+    if (type && abbrev) types[type] = abbrev;
+  }
+  return { rgPrefix, types };
+}
+
+function getNamingConfig() {
+  return loadNamingConfig();
+}
+
+namingSettingsBtn.onclick = () => {
+  if (namingSettingsCard.style.display === 'none') {
+    const config = loadNamingConfig();
+    rgPrefixInput.value = config.rgPrefix;
+    renderNamingTypeRows(config);
+    namingSettingsResult.textContent = '';
+    namingSettingsCard.style.display = '';
+  } else {
+    namingSettingsCard.style.display = 'none';
+  }
+};
+
+document.getElementById('addNamingTypeBtn').onclick = () => addNamingTypeRow();
+
+document.getElementById('saveNamingBtn').onclick = () => {
+  const config = getNamingConfigFromForm();
+  localStorage.setItem(NAMING_CONFIG_KEY, JSON.stringify(config));
+  namingSettingsResult.textContent = 'Saved. Re-run the assessment to apply these naming rules.';
+};
+
+document.getElementById('resetNamingBtn').onclick = () => {
+  const config = JSON.parse(JSON.stringify(DEFAULT_NAMING_CONFIG));
+  rgPrefixInput.value = config.rgPrefix;
+  renderNamingTypeRows(config);
+  namingSettingsResult.textContent = 'Reset to CAF defaults (not yet saved - click Save to persist).';
+};
+
+const STATUS_ICON = {
+  'Implemented': '✓',
+  'Partial': '◐',
+  'Not Implemented': '✕',
+  'Manual / Process': 'ℹ',
+  'Error': '⚠',
+};
 
 function statusClass(status) {
   return 'status-' + status.replace(/\s+\/\s+|\s+/g, '-');
 }
+function badgeClass(status) {
+  return 'badge-' + status.replace(/\s+\/\s+|\s+/g, '-');
+}
+function statCardClass(status) {
+  return 'st-' + status.replace(/\s+\/\s+|\s+/g, '');
+}
 
 function scoreColor(pct) {
   if (pct >= 75) return '#107c10';
-  if (pct >= 50) return '#9a6700';
+  if (pct >= 50) return '#9d5d00';
   return '#d13438';
 }
 
+function escapeHtml(str) {
+  const div = document.createElement('div');
+  div.textContent = str || '';
+  return div.innerHTML;
+}
+
+// ───────────────────────────────────────────
+// Subscriptions
+// ───────────────────────────────────────────
 async function loadSubscriptions() {
   try {
     const res = await fetch('/api/subscriptions');
@@ -162,16 +484,34 @@ async function loadSubscriptions() {
       const opt = document.createElement('option');
       opt.value = sub.id;
       opt.textContent = `${sub.name} (${sub.id})`;
+      opt.dataset.name = sub.name;
+      opt.dataset.state = sub.state;
       subSelect.appendChild(opt);
     }
+    showSubInfo();
   } catch (e) {
     subSelect.innerHTML = '<option value="">Error loading subscriptions</option>';
-    statusEl.innerHTML = `<div class="error-box">${e.message}</div>`;
+    statusEl.innerHTML = `<div class="error-box">${escapeHtml(e.message)}</div>`;
   }
 }
 
-let lastResults = [];
+function showSubInfo() {
+  const opt = subSelect.options[subSelect.selectedIndex];
+  if (!opt || !opt.value) { subInfo.style.display = 'none'; return; }
+  const state = opt.dataset.state || '';
+  const pillClass = state === 'Enabled' ? 'pill-enabled' : 'pill-disabled';
+  subInfo.innerHTML = `
+    <span><b>Name:</b> ${escapeHtml(opt.dataset.name || '')}</span>
+    <span><b>Subscription ID:</b> ${escapeHtml(opt.value)}</span>
+    <span><b>State:</b> <span class="pill ${pillClass}">${escapeHtml(state)}</span></span>
+  `;
+  subInfo.style.display = 'flex';
+}
+subSelect.addEventListener('change', showSubInfo);
 
+// ───────────────────────────────────────────
+// Run assessment
+// ───────────────────────────────────────────
 async function runAssessment() {
   const subscriptionId = subSelect.value;
   if (!subscriptionId) return;
@@ -179,132 +519,714 @@ async function runAssessment() {
   statusEl.textContent = 'Scanning subscription... this can take 10-30 seconds.';
   scoreCard.style.display = 'none';
   resultsCard.style.display = 'none';
-  tagPanel.style.display = 'none';
+  actionPanel.style.display = 'none';
 
   try {
     const res = await fetch('/api/assess', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ subscriptionId }),
+      body: JSON.stringify({ subscriptionId, namingConfig: getNamingConfig() }),
     });
     const data = await res.json();
     if (data.error) throw new Error(data.error);
 
-    lastResults = data.results;
+    currentResults = data.results;
+    currentSubscriptionId = subscriptionId;
+
     renderScore(data.scoring);
-    renderResults(data.results);
+    renderStats(data.results);
+    populateCategoryFilter(data.results);
+    applyFilters();
+    resultsCard.style.display = '';
     statusEl.textContent = '';
+
+    const now = new Date();
+    headerTimestamp.textContent = `Last assessed: ${now.toLocaleString()}`;
   } catch (e) {
-    statusEl.innerHTML = `<div class="error-box">${e.message}</div>`;
+    statusEl.innerHTML = `<div class="error-box">${escapeHtml(e.message)}</div>`;
   } finally {
     scanBtn.disabled = false;
   }
 }
 
+// ───────────────────────────────────────────
+// Score ring + category bars
+// ───────────────────────────────────────────
 function renderScore(scoring) {
   const color = scoreColor(scoring.overallPct);
-  scoreBanner.style.background = color;
-  scoreBanner.textContent = `CAF Alignment Score: ${scoring.overallPct}% - ${scoring.maturity}`;
+  const r = 70;
+  const circumference = 2 * Math.PI * r;
+  scoreRingFill.style.stroke = color;
+  scoreRingFill.style.strokeDasharray = `${circumference}`;
+  scoreRingFill.style.strokeDashoffset = `${circumference * (1 - scoring.overallPct / 100)}`;
+  scorePctText.textContent = `${scoring.overallPct}%`;
+  scorePctText.style.color = color;
+  maturityBadge.textContent = scoring.maturity;
+  maturityBadge.style.background = color + '22';
+  maturityBadge.style.color = color;
+
   scoreDetail.textContent = `${scoring.earned} of ${scoring.max} scorable checks passed (${scoring.excluded} excluded - Manual/Process or Error)`;
 
-  categoryTable.innerHTML = '';
+  categoryBars.innerHTML = '';
   for (const c of scoring.categoryScores) {
-    const tr = document.createElement('tr');
-    tr.innerHTML = `<td>${c.category}</td><td>${c.earned} / ${c.max}</td><td>${c.percent}%</td>`;
-    categoryTable.appendChild(tr);
+    const barColor = scoreColor(c.percent);
+    const row = document.createElement('div');
+    row.className = 'category-bar-row';
+    row.innerHTML = `
+      <span>${escapeHtml(c.category)}</span>
+      <div class="category-bar-track"><div class="category-bar-fill" style="width:${c.percent}%;background:${barColor}"></div></div>
+      <span class="category-bar-pct" style="color:${barColor}">${c.percent}%</span>
+    `;
+    categoryBars.appendChild(row);
   }
   scoreCard.style.display = '';
 }
+
+// ───────────────────────────────────────────
+// Summary stat cards
+// ───────────────────────────────────────────
+function renderStats(results) {
+  const counts = {
+    Implemented: 0, Partial: 0, 'Not Implemented': 0, 'Manual / Process': 0, Error: 0,
+  };
+  for (const r of results) {
+    if (r.status in counts) counts[r.status]++;
+  }
+  const order = [
+    ['Implemented', 'Implemented'],
+    ['Partial', 'Partial'],
+    ['Not Implemented', 'Not Implemented'],
+    ['Manual / Process', 'Manual / Process'],
+    ['Error', 'Error'],
+  ];
+  statCards.innerHTML = order.map(([key, label]) => `
+    <div class="stat-card ${statCardClass(key)}">
+      <div class="num">${counts[key]}</div>
+      <div class="label">${escapeHtml(label)}</div>
+    </div>
+  `).join('') + `
+    <div class="stat-card">
+      <div class="num">${results.length}</div>
+      <div class="label">Total checks</div>
+    </div>
+  `;
+}
+
+// ───────────────────────────────────────────
+// Results table + filters
+// ───────────────────────────────────────────
+function populateCategoryFilter(results) {
+  const categories = [...new Set(results.map(r => r.category))];
+  const prev = categoryFilter.value;
+  categoryFilter.innerHTML = '<option value="">All categories</option>' +
+    categories.map(c => `<option value="${escapeHtml(c)}">${escapeHtml(c)}</option>`).join('');
+  if (categories.includes(prev)) categoryFilter.value = prev;
+}
+
+function applyFilters() {
+  const cat = categoryFilter.value;
+  const status = statusFilter.value;
+  const filtered = currentResults.filter(r =>
+    (!cat || r.category === cat) && (!status || r.status === status)
+  );
+  renderResults(filtered);
+  resultsCount.textContent = `${filtered.length} of ${currentResults.length} checks`;
+}
+categoryFilter.onchange = applyFilters;
+statusFilter.onchange = applyFilters;
 
 function renderResults(results) {
   resultsTable.innerHTML = '';
   for (const r of results) {
     const tr = document.createElement('tr');
     const actionCell = document.createElement('td');
-    if (r.check === 'Required tags on resources' && r.extra && r.extra.nonCompliant && r.extra.nonCompliant.length > 0) {
-      const btn = document.createElement('button');
-      btn.textContent = 'Apply tags';
-      btn.onclick = () => openTagPanel(r.extra.nonCompliant);
-      actionCell.appendChild(btn);
-    }
+    addActionButton(actionCell, currentSubscriptionId, r);
     tr.innerHTML = `
-      <td>${r.category}</td>
-      <td>${r.check}</td>
-      <td class="${statusClass(r.status)}">${r.status}</td>
+      <td><span class="category-tag">${escapeHtml(r.category)}</span></td>
+      <td>${escapeHtml(r.check)}</td>
+      <td><span class="status-badge ${badgeClass(r.status)}">${STATUS_ICON[r.status] || ''} ${escapeHtml(r.status)}</span></td>
       <td>${escapeHtml(r.details)}</td>
       <td>${escapeHtml(r.recommendation || '')}</td>
     `;
     tr.appendChild(actionCell);
     resultsTable.appendChild(tr);
   }
-  resultsCard.style.display = '';
 }
 
-function escapeHtml(str) {
-  const div = document.createElement('div');
-  div.textContent = str || '';
-  return div.innerHTML;
+function addActionButton(cell, subscriptionId, r) {
+  const extra = r.extra || {};
+  let btn = null;
+
+  if (r.check === 'Required tags on resources' && extra.nonCompliant && extra.nonCompliant.length > 0) {
+    btn = makeButton('Apply tags', () => openTagPanel(subscriptionId, extra.nonCompliant));
+  } else if (r.check === 'Resource locks (CanNotDelete)' && extra.resourceGroups && extra.resourceGroups.some(rg => !rg.locked)) {
+    btn = makeButton('Add locks', () => openLockPanel(subscriptionId, extra.resourceGroups));
+  } else if (r.check === 'Defender for Cloud plans (Standard tier)' && extra.freePlans && extra.freePlans.length > 0) {
+    btn = makeButton('Upgrade to Standard', () => openDefenderPanel(subscriptionId, extra.freePlans));
+  } else if (r.check === 'Storage account security settings' && extra.flagged && extra.flagged.length > 0) {
+    btn = makeButton('Fix settings', () => openStoragePanel(subscriptionId, extra.flagged));
+  } else if (r.check === 'Key Vault soft delete & purge protection' && extra.flagged && extra.flagged.length > 0) {
+    btn = makeButton('Enable protections', () => openKeyVaultPanel(subscriptionId, extra.flagged));
+  } else if (r.check === 'Budgets configured' && r.status === 'Not Implemented') {
+    btn = makeButton('Create budget', () => openBudgetPanel(subscriptionId));
+  } else if (r.check === 'VM auto-shutdown schedules' && extra.vms && extra.vms.length > 0) {
+    btn = makeButton('Schedule shutdown', () => openVmShutdownPanel(subscriptionId, extra.vms));
+  } else if (r.check === 'Allowed locations / SKU restriction policy' && extra.missing && extra.missing.length > 0) {
+    btn = makeButton('Assign policy', () => openPolicyRestrictionsPanel(subscriptionId, extra.missing));
+  } else if (r.check === 'Activity Log exported to Log Analytics' && r.status === 'Not Implemented') {
+    btn = makeButton('Export to Log Analytics', () => openActivityLogPanel(subscriptionId));
+  } else if (r.check === 'Management Group placement' && r.status === 'Not Implemented') {
+    btn = makeButton('Move subscription', () => openManagementGroupPanel(subscriptionId));
+  } else if (r.check === 'Recovery Services Vault with backup items' && extra.vms && extra.vms.length > 0) {
+    btn = makeButton('Configure backup', () => openBackupPanel(subscriptionId, extra.vms, extra.vaults || []));
+  }
+
+  if (btn) cell.appendChild(btn);
 }
 
-function openTagPanel(nonCompliant) {
-  resourceList.innerHTML = '';
+function makeButton(label, onClick) {
+  const btn = document.createElement('button');
+  btn.className = 'small';
+  btn.textContent = label;
+  btn.onclick = onClick;
+  return btn;
+}
+
+function openActionPanel(title) {
+  actionTitle.textContent = title;
+  actionResult.textContent = '';
+  actionPanel.style.display = '';
+  actionPanel.scrollIntoView({ behavior: 'smooth' });
+}
+
+document.getElementById('closeAction').onclick = () => { actionPanel.style.display = 'none'; };
+
+function rgNameFromId(id) {
+  const m = id.match(/\/resourceGroups\/([^/]+)\//i);
+  return m ? m[1] : '(unknown)';
+}
+
+// ───────────────────────────────────────────
+// Action: Apply tags (grouped by resource group)
+// ───────────────────────────────────────────
+function openTagPanel(subscriptionId, nonCompliant) {
+  openActionPanel('Apply Tags');
+
+  const groups = {};
   for (const res of nonCompliant) {
-    const label = document.createElement('label');
-    const cb = document.createElement('input');
-    cb.type = 'checkbox';
-    cb.value = res.id;
-    cb.checked = true;
-    label.appendChild(cb);
-    label.append(` ${res.name} (${res.type})`);
-    resourceList.appendChild(label);
+    const rg = rgNameFromId(res.id);
+    if (!groups[rg]) groups[rg] = [];
+    groups[rg].push(res);
   }
-  tagResult.textContent = '';
-  tagPanel.style.display = '';
-  tagPanel.scrollIntoView({ behavior: 'smooth' });
+
+  const defaultKeys = ['Environment', 'Owner', 'CostCenter'];
+  let html = '<p class="hint">Tags use Merge - existing tags are preserved, only the keys you fill in are added/updated. Each resource group can have its own tag values. Use "+ Add tag" for any additional tag keys.</p>';
+  let groupIndex = 0;
+  for (const [rg, items] of Object.entries(groups)) {
+    html += `<div class="rg-group" data-rg-index="${groupIndex}">
+      <div class="rg-header"><label><input type="checkbox" class="rg-select-all" checked> Resource Group: ${escapeHtml(rg)} (${items.length} resource(s))</label></div>
+      <div class="tag-inputs-list">
+        ${defaultKeys.map(key => `<div class="tag-row"><input class="tag-key" placeholder="Tag name" value="${escapeHtml(key)}"><input class="tag-val" placeholder="Tag value"></div>`).join('')}
+      </div>
+      <button type="button" class="small secondary add-tag-row">+ Add tag</button>
+      <div class="resource-list">
+        ${items.map(res => `<label><input type="checkbox" class="res-cb" value="${escapeHtml(res.id)}" checked> ${escapeHtml(res.name)} (${escapeHtml(res.type)})</label>`).join('')}
+      </div>
+    </div>`;
+    groupIndex++;
+  }
+  actionBody.innerHTML = html;
+
+  actionBody.querySelectorAll('.rg-select-all').forEach(cb => {
+    cb.onchange = () => {
+      const group = cb.closest('.rg-group');
+      group.querySelectorAll('.res-cb').forEach(r => r.checked = cb.checked);
+    };
+  });
+
+  actionBody.querySelectorAll('.add-tag-row').forEach(addBtn => {
+    addBtn.onclick = () => {
+      const row = document.createElement('div');
+      row.className = 'tag-row';
+      row.innerHTML = '<input class="tag-key" placeholder="Tag name"><input class="tag-val" placeholder="Tag value">';
+      addBtn.previousElementSibling.appendChild(row);
+    };
+  });
+
+  actionApplyBtn.onclick = async () => {
+    const groupEls = actionBody.querySelectorAll('.rg-group');
+    let totalSelected = 0, totalSuccess = 0;
+    const errors = [];
+    let anyTags = false;
+
+    actionResult.textContent = 'Applying...';
+    for (const groupEl of groupEls) {
+      const tags = {};
+      groupEl.querySelectorAll('.tag-row').forEach(row => {
+        const key = row.querySelector('.tag-key').value.trim();
+        const val = row.querySelector('.tag-val').value.trim();
+        if (key && val) tags[key] = val;
+      });
+
+      const selected = Array.from(groupEl.querySelectorAll('.res-cb:checked')).map(cb => cb.value);
+      if (selected.length === 0) continue;
+      if (Object.keys(tags).length === 0) continue;
+      anyTags = true;
+      totalSelected += selected.length;
+
+      try {
+        const res = await fetch('/api/tags/apply', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ resourceIds: selected, tags }),
+        });
+        const data = await res.json();
+        if (data.error) throw new Error(data.error);
+        totalSuccess += data.outcomes.filter(o => o.status === 'success').length;
+        data.outcomes.filter(o => o.status === 'error').forEach(o => errors.push(`${o.id}: ${o.message}`));
+      } catch (e) {
+        errors.push(e.message);
+      }
+    }
+
+    if (!anyTags) {
+      actionResult.textContent = 'Enter at least one tag value in at least one resource group.';
+      return;
+    }
+    let msg = `Applied tags to ${totalSuccess} of ${totalSelected} resource(s).`;
+    if (errors.length > 0) msg += '\nErrors: ' + errors.join('; ');
+    else msg += ' Re-run the assessment to see the updated score.';
+    actionResult.textContent = msg;
+  };
 }
 
-document.getElementById('closeTagPanel').onclick = () => { tagPanel.style.display = 'none'; };
-
-document.getElementById('applyTagsBtn').onclick = async () => {
-  const selected = Array.from(resourceList.querySelectorAll('input[type=checkbox]:checked')).map(cb => cb.value);
-  if (selected.length === 0) {
-    tagResult.textContent = 'Select at least one resource.';
-    return;
-  }
-  const tags = {};
-  const env = document.getElementById('tagEnvironment').value.trim();
-  const owner = document.getElementById('tagOwner').value.trim();
-  const cc = document.getElementById('tagCostCenter').value.trim();
-  if (env) tags.Environment = env;
-  if (owner) tags.Owner = owner;
-  if (cc) tags.CostCenter = cc;
-  if (Object.keys(tags).length === 0) {
-    tagResult.textContent = 'Enter at least one tag value.';
-    return;
-  }
-
-  tagResult.textContent = `Applying tags to ${selected.length} resource(s)...`;
-  try {
-    const res = await fetch('/api/tags/apply', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ resourceIds: selected, tags }),
-    });
-    const data = await res.json();
-    if (data.error) throw new Error(data.error);
-    const successCount = data.outcomes.filter(o => o.status === 'success').length;
-    const errors = data.outcomes.filter(o => o.status === 'error');
-    let msg = `Applied tags to ${successCount} of ${selected.length} resource(s).`;
-    if (errors.length > 0) {
-      msg += ' Errors: ' + errors.map(e => `${e.id}: ${e.message}`).join('; ');
-    } else {
-      msg += ' Re-run the assessment to see the updated score.';
+// ───────────────────────────────────────────
+// Action: Add CanNotDelete locks to resource groups
+// ───────────────────────────────────────────
+function openLockPanel(subscriptionId, resourceGroups) {
+  openActionPanel('Add CanNotDelete Locks');
+  actionBody.innerHTML = `
+    <p class="hint">Adds a "caf-cannotdelete" lock to each selected resource group. This prevents accidental deletion of the resource group and its resources (resources can still be modified).</p>
+    <div class="plain-list">
+      ${resourceGroups.map(rg => `<label><input type="checkbox" class="rg-cb" value="${escapeHtml(rg.name)}" ${rg.locked ? '' : 'checked'}> ${escapeHtml(rg.name)} ${rg.locked ? '(already locked)' : ''}</label>`).join('')}
+    </div>
+  `;
+  actionApplyBtn.onclick = async () => {
+    const selected = Array.from(actionBody.querySelectorAll('.rg-cb:checked')).map(cb => cb.value);
+    if (selected.length === 0) {
+      actionResult.textContent = 'Select at least one resource group.';
+      return;
     }
-    tagResult.textContent = msg;
-  } catch (e) {
-    tagResult.textContent = `Error: ${e.message}`;
-  }
-};
+    actionResult.textContent = 'Applying...';
+    try {
+      const res = await fetch('/api/locks/apply', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ subscriptionId, resourceGroups: selected }),
+      });
+      const data = await res.json();
+      if (data.error) throw new Error(data.error);
+      const successCount = data.outcomes.filter(o => o.status === 'success').length;
+      const errors = data.outcomes.filter(o => o.status === 'error');
+      let msg = `Added locks to ${successCount} of ${selected.length} resource group(s).`;
+      if (errors.length > 0) msg += '\nErrors: ' + errors.map(e => `${e.resourceGroup}: ${e.message}`).join('; ');
+      else msg += ' Re-run the assessment to see the updated score.';
+      actionResult.textContent = msg;
+    } catch (e) {
+      actionResult.textContent = `Error: ${e.message}`;
+    }
+  };
+}
+
+// ───────────────────────────────────────────
+// Action: Upgrade Defender for Cloud plans to Standard
+// ───────────────────────────────────────────
+function openDefenderPanel(subscriptionId, freePlans) {
+  openActionPanel('Upgrade Defender for Cloud Plans');
+  actionBody.innerHTML = `
+    <p class="warn">Upgrading to Standard tier incurs additional cost per resource. Review pricing before applying.</p>
+    <div class="plain-list">
+      ${freePlans.map(p => `<label><input type="checkbox" class="plan-cb" value="${escapeHtml(p)}"> ${escapeHtml(p)}</label>`).join('')}
+    </div>
+  `;
+  actionApplyBtn.onclick = async () => {
+    const selected = Array.from(actionBody.querySelectorAll('.plan-cb:checked')).map(cb => cb.value);
+    if (selected.length === 0) {
+      actionResult.textContent = 'Select at least one plan.';
+      return;
+    }
+    actionResult.textContent = 'Applying...';
+    try {
+      const res = await fetch('/api/defender/upgrade', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ subscriptionId, plans: selected }),
+      });
+      const data = await res.json();
+      if (data.error) throw new Error(data.error);
+      const successCount = data.outcomes.filter(o => o.status === 'success').length;
+      const errors = data.outcomes.filter(o => o.status === 'error');
+      let msg = `Upgraded ${successCount} of ${selected.length} plan(s) to Standard.`;
+      if (errors.length > 0) msg += '\nErrors: ' + errors.map(e => `${e.plan}: ${e.message}`).join('; ');
+      else msg += ' Re-run the assessment to see the updated score.';
+      actionResult.textContent = msg;
+    } catch (e) {
+      actionResult.textContent = `Error: ${e.message}`;
+    }
+  };
+}
+
+// ───────────────────────────────────────────
+// Action: Fix storage account security settings
+// ───────────────────────────────────────────
+function openStoragePanel(subscriptionId, flagged) {
+  openActionPanel('Fix Storage Account Security Settings');
+  actionBody.innerHTML = `
+    <p class="hint">Sets "Secure transfer required" = On, Minimum TLS version = 1.2, and "Allow Blob public access" = Disabled on the selected storage accounts.</p>
+    <div class="plain-list">
+      ${flagged.map(sa => `<label><input type="checkbox" class="sa-cb" value="${escapeHtml(sa.id)}" checked> ${escapeHtml(sa.name)} - ${escapeHtml(sa.issues.join(', '))}</label>`).join('')}
+    </div>
+  `;
+  actionApplyBtn.onclick = async () => {
+    const selected = Array.from(actionBody.querySelectorAll('.sa-cb:checked')).map(cb => cb.value);
+    if (selected.length === 0) {
+      actionResult.textContent = 'Select at least one storage account.';
+      return;
+    }
+    actionResult.textContent = 'Applying...';
+    try {
+      const res = await fetch('/api/storage/fix', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ resourceIds: selected }),
+      });
+      const data = await res.json();
+      if (data.error) throw new Error(data.error);
+      const successCount = data.outcomes.filter(o => o.status === 'success').length;
+      const errors = data.outcomes.filter(o => o.status === 'error');
+      let msg = `Fixed ${successCount} of ${selected.length} storage account(s).`;
+      if (errors.length > 0) msg += '\nErrors: ' + errors.map(e => `${e.id}: ${e.message}`).join('; ');
+      else msg += ' Re-run the assessment to see the updated score.';
+      actionResult.textContent = msg;
+    } catch (e) {
+      actionResult.textContent = `Error: ${e.message}`;
+    }
+  };
+}
+
+// ───────────────────────────────────────────
+// Action: Enable Key Vault soft delete & purge protection
+// ───────────────────────────────────────────
+function openKeyVaultPanel(subscriptionId, flagged) {
+  openActionPanel('Enable Key Vault Protections');
+  actionBody.innerHTML = `
+    <p class="warn">Purge protection cannot be disabled once enabled. Soft delete also cannot be disabled once enabled.</p>
+    <div class="plain-list">
+      ${flagged.map(v => `<label><input type="checkbox" class="kv-cb" value="${escapeHtml(v.id)}" checked> ${escapeHtml(v.name)} - ${escapeHtml(v.issues.join(', '))}</label>`).join('')}
+    </div>
+  `;
+  actionApplyBtn.onclick = async () => {
+    const selected = Array.from(actionBody.querySelectorAll('.kv-cb:checked')).map(cb => cb.value);
+    if (selected.length === 0) {
+      actionResult.textContent = 'Select at least one key vault.';
+      return;
+    }
+    actionResult.textContent = 'Applying...';
+    try {
+      const res = await fetch('/api/keyvault/fix', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ resourceIds: selected }),
+      });
+      const data = await res.json();
+      if (data.error) throw new Error(data.error);
+      const successCount = data.outcomes.filter(o => o.status === 'success').length;
+      const errors = data.outcomes.filter(o => o.status === 'error');
+      let msg = `Updated ${successCount} of ${selected.length} key vault(s).`;
+      if (errors.length > 0) msg += '\nErrors: ' + errors.map(e => `${e.id}: ${e.message}`).join('; ');
+      else msg += ' Re-run the assessment to see the updated score.';
+      actionResult.textContent = msg;
+    } catch (e) {
+      actionResult.textContent = `Error: ${e.message}`;
+    }
+  };
+}
+
+// ───────────────────────────────────────────
+// Action: Create a subscription budget
+// ───────────────────────────────────────────
+function openBudgetPanel(subscriptionId) {
+  openActionPanel('Create Budget');
+  actionBody.innerHTML = `
+    <div class="form-row">
+      <div><label>Budget name</label><input id="budgetName" value="monthly-budget"></div>
+      <div><label>Monthly amount (subscription currency)</label><input id="budgetAmount" type="number" placeholder="e.g. 1000"></div>
+      <div><label>Alert threshold (%)</label><input id="budgetThreshold" type="number" value="80"></div>
+      <div><label>Alert email</label><input id="budgetEmail" type="email" placeholder="you@company.com"></div>
+    </div>
+  `;
+  actionApplyBtn.onclick = async () => {
+    const name = document.getElementById('budgetName').value.trim();
+    const amount = document.getElementById('budgetAmount').value.trim();
+    const thresholdPercent = document.getElementById('budgetThreshold').value.trim();
+    const contactEmail = document.getElementById('budgetEmail').value.trim();
+    if (!name || !amount || !contactEmail) {
+      actionResult.textContent = 'Name, amount and alert email are required.';
+      return;
+    }
+    actionResult.textContent = 'Creating...';
+    try {
+      const res = await fetch('/api/budget/create', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ subscriptionId, name, amount, thresholdPercent, contactEmail }),
+      });
+      const data = await res.json();
+      if (data.error) throw new Error(data.error);
+      actionResult.textContent = 'Budget created. Re-run the assessment to see the updated score.';
+    } catch (e) {
+      actionResult.textContent = `Error: ${e.message}`;
+    }
+  };
+}
+
+// ───────────────────────────────────────────
+// Action: VM auto-shutdown schedules
+// ───────────────────────────────────────────
+function openVmShutdownPanel(subscriptionId, vms) {
+  openActionPanel('Schedule VM Auto-Shutdown');
+  actionBody.innerHTML = `
+    <p class="hint">Creates a daily auto-shutdown schedule for each selected VM. Useful for non-production VMs to reduce compute costs.</p>
+    <div class="form-row">
+      <div><label>Shutdown time (24h, HHmm)</label><input id="shutdownTime" value="1900"></div>
+      <div><label>Time zone</label><input id="shutdownTz" value="UTC"></div>
+      <div><label>Notification email (optional)</label><input id="shutdownEmail" type="email" placeholder="you@company.com"></div>
+    </div>
+    <div class="plain-list">
+      ${vms.map(vm => `<label><input type="checkbox" class="vm-cb" value="${escapeHtml(vm.id)}" checked> ${escapeHtml(vm.name)} (${escapeHtml(vm.resourceGroup)})</label>`).join('')}
+    </div>
+  `;
+  actionApplyBtn.onclick = async () => {
+    const time = document.getElementById('shutdownTime').value.trim();
+    const timeZoneId = document.getElementById('shutdownTz').value.trim();
+    const notificationEmail = document.getElementById('shutdownEmail').value.trim();
+    if (!/^\d{4}$/.test(time)) {
+      actionResult.textContent = 'Shutdown time must be in HHmm format, e.g. 1900.';
+      return;
+    }
+    if (!timeZoneId) {
+      actionResult.textContent = 'Time zone is required.';
+      return;
+    }
+    const selectedIds = Array.from(actionBody.querySelectorAll('.vm-cb:checked')).map(cb => cb.value);
+    if (selectedIds.length === 0) {
+      actionResult.textContent = 'Select at least one VM.';
+      return;
+    }
+    const selectedVms = vms.filter(vm => selectedIds.includes(vm.id));
+    actionResult.textContent = 'Applying...';
+    try {
+      const res = await fetch('/api/vm/autoshutdown', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ subscriptionId, vms: selectedVms, time, timeZoneId, notificationEmail }),
+      });
+      const data = await res.json();
+      if (data.error) throw new Error(data.error);
+      const successCount = data.outcomes.filter(o => o.status === 'success').length;
+      const errors = data.outcomes.filter(o => o.status === 'error');
+      let msg = `Scheduled auto-shutdown for ${successCount} of ${selectedVms.length} VM(s).`;
+      if (errors.length > 0) msg += '\nErrors: ' + errors.map(e => `${e.name}: ${e.message}`).join('; ');
+      else msg += ' Re-run the assessment to see the updated score.';
+      actionResult.textContent = msg;
+    } catch (e) {
+      actionResult.textContent = `Error: ${e.message}`;
+    }
+  };
+}
+
+// ───────────────────────────────────────────
+// Action: Allowed locations / SKU restriction policy
+// ───────────────────────────────────────────
+function openPolicyRestrictionsPanel(subscriptionId, missing) {
+  openActionPanel('Assign Allowed Locations / SKU Policies');
+  actionBody.innerHTML = `
+    <p class="hint">Assigns the built-in "Allowed locations" and/or "Allowed virtual machine SKUs" policies at subscription scope with a Deny effect. Existing non-compliant resources are not affected until they are redeployed or modified.</p>
+    <div class="form-row">
+      ${missing.includes('locations') ? '<div><label>Allowed locations (comma-separated)</label><input id="allowedLocations" placeholder="e.g. eastus, westeurope"></div>' : ''}
+      ${missing.includes('skus') ? '<div><label>Allowed VM SKUs (comma-separated)</label><input id="allowedSkus" placeholder="e.g. Standard_B2s, Standard_D2s_v5"></div>' : ''}
+    </div>
+  `;
+  actionApplyBtn.onclick = async () => {
+    const locationsEl = document.getElementById('allowedLocations');
+    const skusEl = document.getElementById('allowedSkus');
+    const locations = locationsEl ? locationsEl.value.split(',').map(s => s.trim()).filter(Boolean) : [];
+    const skus = skusEl ? skusEl.value.split(',').map(s => s.trim()).filter(Boolean) : [];
+    if (locations.length === 0 && skus.length === 0) {
+      actionResult.textContent = 'Enter at least one location or SKU.';
+      return;
+    }
+    actionResult.textContent = 'Applying...';
+    try {
+      const res = await fetch('/api/policy/restrictions', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ subscriptionId, locations, skus }),
+      });
+      const data = await res.json();
+      if (data.error) throw new Error(data.error);
+      const successCount = data.outcomes.filter(o => o.status === 'success').length;
+      const errors = data.outcomes.filter(o => o.status === 'error');
+      let msg = `Assigned ${successCount} of ${data.outcomes.length} policy/policies.`;
+      if (errors.length > 0) msg += '\nErrors: ' + errors.map(e => `${e.policy}: ${e.message}`).join('; ');
+      else msg += ' Re-run the assessment to see the updated score.';
+      actionResult.textContent = msg;
+    } catch (e) {
+      actionResult.textContent = `Error: ${e.message}`;
+    }
+  };
+}
+
+// ───────────────────────────────────────────
+// Action: Export Activity Log to Log Analytics
+// ───────────────────────────────────────────
+function openActivityLogPanel(subscriptionId) {
+  openActionPanel('Export Activity Log to Log Analytics');
+  actionBody.innerHTML = `<p class="hint">Loading Log Analytics workspaces...</p>`;
+  actionApplyBtn.onclick = null;
+
+  (async () => {
+    try {
+      const res = await fetch(`/api/loganalytics/workspaces?subscriptionId=${encodeURIComponent(subscriptionId)}`);
+      const data = await res.json();
+      if (data.error) throw new Error(data.error);
+      const workspaces = data.workspaces || [];
+      if (workspaces.length === 0) {
+        actionBody.innerHTML = `<p class="hint">No Log Analytics workspaces found in this subscription. Create a workspace first, then re-open this action.</p>`;
+        return;
+      }
+      actionBody.innerHTML = `
+        <p class="hint">Creates a subscription-level diagnostic setting that sends the Activity Log (Administrative, Security, ServiceHealth, Alert, Recommendation, Policy, Autoscale, ResourceHealth categories) to the selected Log Analytics workspace.</p>
+        <div class="form-row">
+          <div>
+            <label>Log Analytics workspace</label>
+            <select id="lawSelect">${workspaces.map(w => `<option value="${escapeHtml(w.id)}">${escapeHtml(w.name)} (${escapeHtml(w.resourceGroup)})</option>`).join('')}</select>
+          </div>
+        </div>
+      `;
+      actionApplyBtn.onclick = async () => {
+        const workspaceId = document.getElementById('lawSelect').value;
+        actionResult.textContent = 'Applying...';
+        try {
+          const res2 = await fetch('/api/monitoring/activitylog', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ subscriptionId, workspaceId }),
+          });
+          const data2 = await res2.json();
+          if (data2.error) throw new Error(data2.error);
+          actionResult.textContent = 'Activity Log export configured. Re-run the assessment to see the updated score.';
+        } catch (e) {
+          actionResult.textContent = `Error: ${e.message}`;
+        }
+      };
+    } catch (e) {
+      actionBody.innerHTML = `<p class="hint">Error loading workspaces: ${escapeHtml(e.message)}</p>`;
+    }
+  })();
+}
+
+// ───────────────────────────────────────────
+// Action: Move subscription to a Management Group
+// ───────────────────────────────────────────
+function openManagementGroupPanel(subscriptionId) {
+  openActionPanel('Move Subscription to Management Group');
+  actionBody.innerHTML = `<p class="hint">Loading management groups...</p>`;
+  actionApplyBtn.onclick = null;
+
+  (async () => {
+    try {
+      const res = await fetch('/api/managementgroups');
+      const data = await res.json();
+      if (data.error) throw new Error(data.error);
+      const groups = data.groups || [];
+      if (groups.length === 0) {
+        actionBody.innerHTML = `<p class="hint">No management groups found that you have access to.</p>`;
+        return;
+      }
+      actionBody.innerHTML = `
+        <p class="warn">Moving a subscription changes which Azure Policies and RBAC role assignments apply to it via inheritance. Review the target management group's policies before proceeding.</p>
+        <div class="form-row">
+          <div>
+            <label>Target management group</label>
+            <select id="mgSelect">${groups.map(g => `<option value="${escapeHtml(g.name)}">${escapeHtml(g.displayName)} (${escapeHtml(g.name)})</option>`).join('')}</select>
+          </div>
+        </div>
+      `;
+      actionApplyBtn.onclick = async () => {
+        const managementGroupId = document.getElementById('mgSelect').value;
+        actionResult.textContent = 'Applying...';
+        try {
+          const res2 = await fetch('/api/subscription/move-mg', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ subscriptionId, managementGroupId }),
+          });
+          const data2 = await res2.json();
+          if (data2.error) throw new Error(data2.error);
+          actionResult.textContent = 'Subscription moved. Re-run the assessment to see the updated score.';
+        } catch (e) {
+          actionResult.textContent = `Error: ${e.message}`;
+        }
+      };
+    } catch (e) {
+      actionBody.innerHTML = `<p class="hint">Error loading management groups: ${escapeHtml(e.message)}</p>`;
+    }
+  })();
+}
+
+// ───────────────────────────────────────────
+// Action: Configure Recovery Services Vault backup for VMs
+// ───────────────────────────────────────────
+function openBackupPanel(subscriptionId, vms, vaults) {
+  openActionPanel('Configure VM Backup');
+  const locationsWithVault = new Set(vaults.map(v => v.location));
+  const newVaultLocations = [...new Set(vms.map(vm => vm.location).filter(loc => !locationsWithVault.has(loc)))];
+  actionBody.innerHTML = `
+    <p class="hint">Enables Azure Backup (daily, via the vault's built-in "DefaultPolicy") for the selected VMs.
+    VMs in a region with an existing Recovery Services Vault will be added to that vault.
+    ${newVaultLocations.length > 0 ? `New vaults named <code>rsv-&lt;location&gt;</code> will be created for: ${newVaultLocations.map(escapeHtml).join(', ')}.` : ''}</p>
+    <div class="plain-list">
+      ${vms.map(vm => `<label><input type="checkbox" class="backup-vm-cb" value="${escapeHtml(vm.id)}" checked> ${escapeHtml(vm.name)} (${escapeHtml(vm.resourceGroup)}, ${escapeHtml(vm.location)})</label>`).join('')}
+    </div>
+  `;
+  actionApplyBtn.onclick = async () => {
+    const selectedIds = Array.from(actionBody.querySelectorAll('.backup-vm-cb:checked')).map(cb => cb.value);
+    if (selectedIds.length === 0) {
+      actionResult.textContent = 'Select at least one VM.';
+      return;
+    }
+    const selectedVms = vms.filter(vm => selectedIds.includes(vm.id));
+    actionResult.textContent = 'Applying... this can take a minute if new vaults need to be created.';
+    try {
+      const res = await fetch('/api/backup/configure', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ subscriptionId, vms: selectedVms, vaults }),
+      });
+      const data = await res.json();
+      if (data.error) throw new Error(data.error);
+      const successCount = data.outcomes.filter(o => o.status === 'success').length;
+      const errors = data.outcomes.filter(o => o.status === 'error');
+      let msg = `Configured backup for ${successCount} of ${selectedVms.length} VM(s).`;
+      if (errors.length > 0) msg += '\nErrors: ' + errors.map(e => `${e.name}: ${e.message}`).join('; ');
+      else msg += ' Re-run the assessment to see the updated score.';
+      actionResult.textContent = msg;
+    } catch (e) {
+      actionResult.textContent = `Error: ${e.message}`;
+    }
+  };
+}
 
 scanBtn.onclick = runAssessment;
 loadSubscriptions();
